@@ -5,7 +5,7 @@ const routesUser = require('./routes/user_route');
 
 mongoos.set('useCreateIndex', true);
 
-require('dotenv').config();
+require('dotenv').config();  //environmental variables
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -27,7 +27,7 @@ app.use((req, res, next) => {
     }
     next();
 });
-const uri = process.env.ATLAS_URI;
+const uri = process.env.ATLAS_URI;  //URL for mongod connection
 const mongoURL = "mongodb://localhost:" + uri;
 mongoos.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true });
 mongoos.Promise = global.Promise;
