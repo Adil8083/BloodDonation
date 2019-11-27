@@ -1,18 +1,36 @@
+const createError = require('http-errors');
 const express = require('express');
 const mongoos = require('mongoose');
 const cors = require('cors');
-const routesUser = require('./routes/user_route');
+const cookiesParser = require('cookie-parser');
+const winston = require('winston');
 
+
+var routesUser = require('./routes/user_route');
+
+const config = require('config');
+
+var app = express();
+winston.handleExceptions(
+    new winston.transports.Console({ colorize: true, prettyPrint: true }),
+    new winston.transports.File({ filename: "uncaughtExceptions.log" })
+);
+
+process.on("unhandledRejection", ex => {
+    throw ex;
+});
+winston.add(winston.transports.File, { filename: "logfile.log" });
 mongoos.set('useCreateIndex', true);
 
 require('dotenv').config();  //environmental variables
-
-const app = express();
+// process.env.SUPRESS_NO_CONFIG_WARNING = 'y';
 const port = process.env.PORT || 3000;
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookiesParser());
 app.use("/user", routesUser);
 
-app.use(express.json());
 app.use(cors());
 
 app.use((req, res, next) => {
@@ -27,14 +45,33 @@ app.use((req, res, next) => {
     }
     next();
 });
-const uri = process.env.ATLAS_URI;  //URL for mongod connection
-const mongoURL = "mongodb://localhost:" + uri;
-mongoos.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true });
-mongoos.Promise = global.Promise;
-const connection = mongoos.connection;
-connection.once('open', () => {
-    console.log("MongoDB SERVER connected")
-})
+
+app.use(function (req, res, next) {
+    next(createError(404));
+});
+
+// error handler
+app.use(function (err, req, res, next) {
+    // set locals, only providing error in development
+    res.locals.message = err.message;
+    res.locals.error = req.app.get("env") === "development" ? err : {};
+
+    // render the error page
+    res.status(err.status || 500);
+    res.render("error");
+});
+
+
+// const uri = process.env.ATLAS_URI;  //URL for mongod connection
+// const mongoURL = "mongodb://localhost:" + uri;
+mongoos.connect(config.get("db"), { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => {
+        console.log("MongoDB SERVER connected");
+        winston.info("Winston: Connected to Mongo ....");
+    })
+    .catch(error => console.log(error.message))
+
+// mongoos.Promise = global.Promise;
 app.listen(port, () => {
     console.log('Server is running on port: ' + port)
 })
