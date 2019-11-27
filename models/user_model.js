@@ -1,4 +1,5 @@
 const mongoos = require('mongoose');
+const Joi = require('joi');
 const Schema = mongoos.Schema;
 
 const User = new Schema({
