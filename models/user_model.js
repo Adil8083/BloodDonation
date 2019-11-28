@@ -1,5 +1,7 @@
 const mongoos = require('mongoose');
 const Joi = require('joi');
+const jwt = require('jsonwebtoken');
+const config = require('config');
 const Schema = mongoos.Schema;
 
 const User = new Schema({
@@ -15,4 +17,11 @@ const User = new Schema({
     NoOFDonations: Number
 });
 
+User.methods.generateToken = function () {
+    const token = jwt.sign({ _id: this._id }, config.get("privateKey"));
+    return token;
+}
+
 module.exports = mongoos.model("User_Infos", User)
+
+exports.User = User;

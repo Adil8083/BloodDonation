@@ -1,3 +1,4 @@
 {
-    "db": "mongodb://localhost:BloodDonation"
+    "privateKey": "BloodDonation",
+    "db": "mongodb://localhost/BloodDonation"
 }

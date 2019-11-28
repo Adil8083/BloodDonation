@@ -1,8 +1,10 @@
 const express = require('express');
 const route = express();
-route.use(express.json());
+const _ = require('lodash');
 const user = require('../models/user_model');
 const bcrypt = require('bcrypt');
+route.use(express.json());
+
 route.post("/createUser", async (req, res, next) => {
     user.find({ UserName: req.body.UserName }, (err, data) => {
         if (Object.getOwnPropertyNames(data).length === 1) {
@@ -51,10 +53,10 @@ route.post("/createUser", async (req, res, next) => {
     const salt = await bcrypt.genSalt(10);
     users.Password = await bcrypt.hash(users.Password, salt);
     await users.save();
-    res.send({
-        success: true,
-        message: req.body
-    })
+    const token = users.generateToken();
+    res
+        .header("authToken", token)
+        .send(_.pick(users, ["_id", "UserName", "email"]))
 }
 );
 
