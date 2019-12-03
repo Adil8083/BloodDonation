@@ -4,7 +4,7 @@ const mongoos = require('mongoose');
 const cors = require('cors');
 const cookiesParser = require('cookie-parser');
 const winston = require('winston');
-
+mongoos.set('useFindAndModify', false);
 
 var routesUser = require('./routes/user_route');
 
@@ -58,7 +58,7 @@ app.use(function (err, req, res, next) {
 
     // render the error page
     res.status(err.status || 500);
-    res.render("error");
+    res.send("error in route");
 });
 
 
