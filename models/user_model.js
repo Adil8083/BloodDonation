@@ -17,7 +17,7 @@ const User = new Schema({
 });
 
 User.methods.generateToken = function () {
-    const token = jwt.sign({ UserName: this.UserName }, config.get("ACCESS_TOKEN"));
+    const token = jwt.sign({ UserName: this.UserName }, config.get("ACCESS_TOKEN"), { expiresIn: '20m' });
     return token;
 }
 

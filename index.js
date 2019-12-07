@@ -25,7 +25,6 @@ mongoos.set('useCreateIndex', true);
 require('dotenv').config();  //environmental variables
 // process.env.SUPRESS_NO_CONFIG_WARNING = 'y';
 const port = process.env.PORT;
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookiesParser());

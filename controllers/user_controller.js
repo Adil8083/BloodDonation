@@ -15,18 +15,19 @@ route.post("/login", async (req, res, next) => {
 
     const userName = req.body.UserName;
     const Password = req.body.Password;
-    if (!userName || !Password) {
-        res.send("Enter valid username or password");
-    }
+    if (!userName || !Password) return res.send("Enter valid username or password");
+
     let user = await User.findOne({ UserName: userName });
     if (!user) return res.status(400).send("Invalid username or password");
+
     let comparePassword = await bcrypt.compare(req.body.Password, user.Password);
-    if (!comparePassword) res.status(400).send("Invalid username or password")
+    if (!comparePassword) return res.status(400).send("Invalid username or password");
+
 
     const token = user.generateToken();
     res
         .header("authToken", token)
-        .send("Token:" + token + "\n" + user.UserName)
+        .send(token)
 })
 
 route.post("/createUser", async (req, res, next) => {
@@ -53,45 +54,65 @@ route.post("/createUser", async (req, res, next) => {
 })
 
 route.put("/updateUser/:username", async (req, res, next) => {
+
     const { error } = updateValidate(req.body);
     if (error) return res.status(401).send(error.details[0].message);
 
-    const uu = await User.findOne({ UserName: req.params.username })
-    if (uu) {
-        if (req.body.email) {
-            const e = await User.findOne({ email: req.body.email });
-            if (e) {
-                res.send("This email is associated with another account")
-            } else {
-                await User.findByIdAndUpdate({ _id: uu._id }, req.body)
-                    .then(res.send("updated succesfully"))
-            }
+    const userFound = await User.findOne({ UserName: req.params.username });
+    if (!userFound) return res.send("User not found"); const token = 0
+
+    if (req.body.email != null) {
+        const userMail = await User.findOne({ email: req.body.email });
+        if (!userMail) {
+            await User.findByIdAndUpdate({ _id: userFound._id }, req.body)
+            res.send("user updates succesfully")
         } else {
-            await User.findByIdAndUpdate({ _id: uu._id }, req.body)
-                .then(res.send("updated succesfully"))
+            res.send("This email is associated with another account")
         }
     } else {
-        res.send("user not found")
+        await User.findByIdAndUpdate({ _id: userFound._id }, req.body)
+        res.send("user updates succesfully")
     }
+})
 
+route.put("/forgotPassword", async (req, res, next) => {
+    const { error } = forgotpas(req.body);
+    if (error) return res.send(error.details[0].message)
+    const user = req.body.UserName;
+    const password = req.body.Password;
+    const confirmPass = req.body.Confirm;
+    if (user) {
+        const userFound = await User.findOne({ UserName: user });
+        if (!userFound) {
+            res.send("User not found");
+        } else if (!(password === confirmPass)) {
+            res.send("Password and Confirm password did not match")
+        } else {
+            let comparePassword = await bcrypt.compare(password, userFound.Password);
+            if (comparePassword) return res.send("You are using old password");
+
+            const hashPass = await bcrypt.hash(password, 10);
+            await User.findOneAndUpdate({ UserName: userFound.UserName }, { $set: { Password: hashPass } })
+                .then(res.send("Password updates succesfully"));
+        }
+    } else {
+        res.send("Enter username")
+    }
 })
 
 route.get("/getUsers", auth, async (req, res, next) => {
     const user = await User.findOne({ UserName: req.body.UserName })
-
     res.send(user);
 })
 
-route.delete("/deleteUser/:UserName", async (req, res) => {
-    await User.findOne({ UserName: req.params.UserName }).then(function (user) {
-        if (!user) {
-            res.send("This username doesnot exist.");
-        } else {
-            User.findByIdAndDelete({ _id: user._id }).then(function (user) {
-                res.send("This User has been deleted.");
-            });
-        }
-    });
+route.delete("/deleteUser/", auth, async (req, res) => {
+
+    const user = await User.findOne({ UserName: req.body.UserName })
+
+    if (!user) return res.send("user does not exist")
+
+    User.findByIdAndDelete({ _id: user._id })
+        .then(res.send("This user has been deleted"))
 });
 
 
@@ -116,6 +137,21 @@ function updateValidate(req) {
         CNIC: Joi.number().min(0000000000000).max(9999999999999),
         is_Reuqested: Joi.boolean(),
         NoOFDonations: Joi.number(),
+    })
+    return schema.validate(req);
+}
+function forgotpas(req) {
+    const schema = Joi.object({
+        UserName: Joi.string()
+            .min(5)
+            .max(20)
+            .required(),
+        Password: Joi.string()
+            .min(6)
+            .max(12),
+        Confirm: Joi.string()
+            .min(6)
+            .max(12)
     })
     return schema.validate(req);
 }

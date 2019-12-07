@@ -1,4 +1,4 @@
 {
-    "privateKey": "BloodDonation",
+    "ACCESS_TOKEN": "78455d446d324db36fbaff87a666758df92fd6d2226e67bdc69c10c9ad0666d4f39e916cd883231eb4cdb50a4b263d82236fae9be71141d655e350b192e49ee4",
     "db": "mongodb://localhost/BloodDonation"
 }
