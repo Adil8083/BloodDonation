@@ -1,14 +1,32 @@
 const express = require("express");
 const route = express();
+route.use(express.json());
+const auth = require("../middleware/auth");
 const Joi = require('@hapi/joi');
 const _ = require("lodash");
 const { User, validate } = require("../models/user_model");
 const bcrypt = require("bcrypt");
+require('dotenv').config();
 route.use(express.json());
 
 route.post("/login", async (req, res, next) => {
-    const { error } = validate(req.body);
+    const { error } = LogINValidate(req.body)
+    if (error) return res.status(404).send(error.details[0].message);
 
+    const userName = req.body.UserName;
+    const Password = req.body.Password;
+    if (!userName || !Password) {
+        res.send("Enter valid username or password");
+    }
+    let user = await User.findOne({ UserName: userName });
+    if (!user) return res.status(400).send("Invalid username or password");
+    let comparePassword = await bcrypt.compare(req.body.Password, user.Password);
+    if (!comparePassword) res.status(400).send("Invalid username or password")
+
+    const token = user.generateToken();
+    res
+        .header("authToken", token)
+        .send("Token:" + token + "\n" + user.UserName)
 })
 
 route.post("/createUser", async (req, res, next) => {
@@ -30,10 +48,7 @@ route.post("/createUser", async (req, res, next) => {
     const salt = await bcrypt.genSalt(10);
     users.Password = await bcrypt.hash(users.Password, salt);
     await users.save();
-    const token = users.generateToken();
-    res
-        .header("authToken", token)
-        .send(_.pick(users, ["_id", "UserName", "email"]))
+    res.send(_.pick(users, ["_id", "UserName", "email"]))
 
 })
 
@@ -61,8 +76,14 @@ route.put("/updateUser/:username", async (req, res, next) => {
 
 })
 
-route.delete("/deleteUser/:UserName", (req, res) => {
-    User.findOne({ UserName: req.params.UserName }).then(function (user) {
+route.get("/getUsers", auth, async (req, res, next) => {
+    const user = await User.findOne({ UserName: req.body.UserName })
+
+    res.send(user);
+})
+
+route.delete("/deleteUser/:UserName", async (req, res) => {
+    await User.findOne({ UserName: req.params.UserName }).then(function (user) {
         if (!user) {
             res.send("This username doesnot exist.");
         } else {
@@ -81,7 +102,8 @@ function LogINValidate(req) {
             .max(20)
             .required(),
         Password: Joi.string()
-            .regex(/^[a-zA-Z0-9]{6,12}$/)
+            .min(6)
+            .max(12)
     });
     return schema.validate(req);
 }

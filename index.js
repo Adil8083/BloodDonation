@@ -24,7 +24,7 @@ mongoos.set('useCreateIndex', true);
 
 require('dotenv').config();  //environmental variables
 // process.env.SUPRESS_NO_CONFIG_WARNING = 'y';
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -50,20 +50,6 @@ app.use(function (req, res, next) {
     next(createError(404));
 });
 
-// error handler
-app.use(function (err, req, res, next) {
-    // set locals, only providing error in development
-    res.locals.message = err.message;
-    res.locals.error = req.app.get("env") === "development" ? err : {};
-
-    // render the error page
-    res.status(err.status || 500);
-    res.send("error in route");
-});
-
-
-// const uri = process.env.ATLAS_URI;  //URL for mongod connection
-// const mongoURL = "mongodb://localhost:" + uri;
 mongoos.connect(config.get("db"), { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => {
         console.log("MongoDB SERVER connected");

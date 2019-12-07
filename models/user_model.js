@@ -3,7 +3,6 @@ const Joi = require('@hapi/joi');
 const jwt = require('jsonwebtoken');
 const config = require('config');
 const Schema = mongoos.Schema;
-
 const User = new Schema({
     id: Schema.Types.ObjectId,
     UserName: { type: String, required: true, unique: true },
@@ -18,7 +17,7 @@ const User = new Schema({
 });
 
 User.methods.generateToken = function () {
-    const token = jwt.sign({ _id: this._id }, config.get("privateKey"));
+    const token = jwt.sign({ UserName: this.UserName }, config.get("ACCESS_TOKEN"));
     return token;
 }
 
