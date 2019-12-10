@@ -7,7 +7,7 @@ const winston = require('winston');
 mongoos.set('useFindAndModify', false);
 
 var routesUser = require('./routes/user_route');
-
+var routeContact = require('./routes/contact-route');
 const config = require('config');
 
 var app = express();
@@ -28,9 +28,9 @@ const port = process.env.PORT;
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookiesParser());
-app.use("/user", routesUser);
-
 app.use(cors());
+app.use("/user", routesUser);
+app.use("/feedback", routeContact);
 
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");

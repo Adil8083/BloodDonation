@@ -1,7 +1,7 @@
 const express = require("express");
 const route = express();
-route.use(express.json());
 const auth = require("../middleware/auth");
+const checkAdmin = require("../middleware/validateAdmin");
 const Joi = require('@hapi/joi');
 const _ = require("lodash");
 const { User, validate } = require("../models/user_model");
@@ -9,7 +9,7 @@ const bcrypt = require("bcrypt");
 require('dotenv').config();
 route.use(express.json());
 
-route.post("/login", async (req, res, next) => {
+route.post("/login", checkAdmin, async (req, res, next) => {
     const { error } = LogINValidate(req.body)
     if (error) return res.status(404).send(error.details[0].message);
 
@@ -124,7 +124,7 @@ function LogINValidate(req) {
             .required(),
         Password: Joi.string()
             .min(6)
-            .max(12)
+            .max(12),
     });
     return schema.validate(req);
 }
@@ -136,6 +136,7 @@ function updateValidate(req) {
         Phone_Number: Joi.number().integer().min(0000000000).max(99999999999),
         CNIC: Joi.number().min(0000000000000).max(9999999999999),
         is_Reuqested: Joi.boolean(),
+        is_admin: Joi.boolean(),
         NoOFDonations: Joi.number(),
     })
     return schema.validate(req);

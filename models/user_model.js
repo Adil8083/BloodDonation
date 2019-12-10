@@ -13,6 +13,7 @@ const User = new Schema({
     Phone_Number: { type: Number, required: true, unique: true },
     CNIC: { type: Number, required: true, unique: true },
     is_Reuqested: { type: Boolean, default: false },
+    is_admin: { type: Boolean },
     NoOFDonations: { type: Number, default: 0 }
 });
 
@@ -36,6 +37,7 @@ function validateUser(user) {
         Phone_Number: Joi.number().integer().min(0000000000).max(99999999999),
         CNIC: Joi.number().min(0000000000000).max(9999999999999),
         is_Reuqested: Joi.boolean(),
+        is_admin: Joi.string(),
         NoOFDonations: Joi.number(),
     });
     return schema.validate(user);
